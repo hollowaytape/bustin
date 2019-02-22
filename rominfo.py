@@ -3,6 +3,10 @@
 """
 
 CTRL = {
+    0x01: b'[LN]',
+    0x02: b'[WAIT]',
+    0x03: b'[CLR]',
+
     0x16: b'\x82\xce',  # ば び  ぶ べ  ぼ ぱ ぴ  ぷ  ぺ ぽ
     0x17: b'\x82\xd1',
     0x18: b'\x82\xd4',
@@ -103,7 +107,8 @@ for n in range(0x41, 0x5b):
 for n in range(0x61, 0x7b):
     CTRL[n] = b'\x82' + (0x1f + n).to_bytes(1, 'little')
 
-ls = [ b'\x9f', b'\xa1', b'\xa3', b'\xa5', b'\xa7', b'\xe1', b'\xe3', b'\xe5', 
+# There's one (wo) at the end, and the rest are one too low. Shift and see what happens
+ls = [ b'\xf0', b'\x9f', b'\xa1', b'\xa3', b'\xa5', b'\xa7', b'\xe1', b'\xe3', b'\xe5', 
        b'\xc1', b'\x00', b'\xa0', b'\xa2', b'\xa4', b'\xa6', b'\xa8', b'\xa9', b'\xab', 
        b'\xad', b'\xaf', b'\xb1', b'\xb3', b'\xb5', b'\xb7', b'\xb9', b'\xbb', b'\xbd', 
        b'\xbf', b'\xc2', b'\xc4', b'\xc6', b'\xc8', b'\xc9', b'\xca', b'\xcb', b'\xcc', 

@@ -24,8 +24,11 @@ def decompress(filename):
             if b == 0x0:
                 result += b'[END]'
             elif b <= 0xf:
-                #result += b'[%i]' % b
-                result += b'?'
+                if b in CTRL:
+                    result += CTRL[b]
+                else:
+                    result += b'[%i]' % b
+                #result += b'?'
             elif b <= 0x16:
                 cursor += 1
                 b2 = contents[cursor]
