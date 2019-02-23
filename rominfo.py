@@ -3,6 +3,8 @@
 """
 
 import os
+from romtools.dump import DumpExcel
+from romtools.disk import Disk, Gamefile
 
 ORIGINAL_ROM_PATH = 'original/Tokyo Twilight Busters.hdi'
 TARGET_ROM_PATH = 'patched/Tokyo Twilight Busters.hdi'
@@ -12,7 +14,111 @@ FILES_TO_REINSERT = [
     'TBS.EXE',
 ]
 
-FILES = []
+FILES = [
+    'TBS.EXE',
+    'AVM.BIN',
+    'CLM.BIN',
+    'EDM.BIN',
+    'FTM.BIN',
+    'MPM.BIN',
+    'RTM.BIN',
+    'STM.BIN',
+    'RTD/MSGS.001',
+    'RTD/MSGS.004',
+    'RTD/MSGS.005',
+    'RTD/MSGS.007',
+    'RTD/MSGS.010',
+    'RTD/MSGS.012',
+    'RTD/MSGS.013',
+    'RTD/RTMS.001',
+    'RTD/RTMS.004',
+    'RTD/RTMS.005',
+    'RTD/RTMS.007',
+    'RTD/RTMS.010',
+    'RTD/RTMS.012',
+    'RTD/RTMS.013',
+    'ABG/TOKYO.DAT',
+    'DAT/INIT.DAT',
+]
+
+FILE_BLOCKS = {
+    'TBS.EXE': [
+        (0x109b0, 0x10bc9), # dev/programming info
+        (0x10c46, 0x10cd6),
+        (0x10e74, 0x10e7c),
+        (0x10e8e, 0x10ea3),
+        (0x10f1c, 0x11014),
+        (0x11030, 0x110de),
+        (0x11060, 0x112c6),
+        (0x112e6, 0x11311),
+        (0x1131e, 0x11334),
+        (0x1134b, 0x11370),
+        (0x11430, 0x12260), # big table of stuff, probably need to edit carefully
+        (0x12490, 0x13790), # another big unsafe table
+        (0x15ad2, 0x15b64), # system stuff?
+        (0x16778, 0x16792), # date stuff
+        (0x16880, 0x15925), # stats?
+        (0x1696f, 0x16a2d),
+        (0x16a7b, 0x16a93),
+        (0x16ac3, 0x16b39),
+        (0x16b64, 0x16cf2),
+    ],
+    'STM.BIN': [
+        (0x1586, 0x15ff),
+        (0x1748, 0x177f),
+        (0x180a, 0x19ed),
+        (0x19ff, 0x2125),
+        (0x213b, 0x2218),
+    ],
+    'RTD/MSGS.001': [
+        (0xf4, 0x8c44),
+    ],
+}
+
+
+# Auto-generate file blocks when they are not manually defined
+Dump = DumpExcel(DUMP_XLS_PATH)
+OriginalTBS = Disk(ORIGINAL_ROM_PATH, dump_excel=Dump)
+TargetTBS = Disk(TARGET_ROM_PATH)
+for file in FILES:
+    print(file)
+    if file not in FILE_BLOCKS and file in FILES:
+        print(file, "not in FILE_BLOCKS")
+        if file.endswith('MCV'):
+            file_path = file
+        else:
+            file_path = os.path.join('TBS', file)
+        gf = Gamefile(file_path, disk=OriginalTBS, dest_disk=TargetTBS, pointer_constant=0)
+
+        blocks = []
+        start = None
+        last_string_end = None
+        if file.endswith('MCV'):
+            translations = Dump.get_translations(file, include_blank=True)
+        else:
+            if "/" in file:
+                sheet_name = file.replace("/", "-")
+            else:
+                sheet_name = file
+            print(sheet_name)
+            translations = Dump.get_translations(sheet_name, include_blank=True)
+        for t in translations:
+
+            if not start:
+                start = t.location
+            else:
+                distance = t.location - last_string_end
+                # Just seems like a good number
+                if distance > 17:
+                    blocks.append((start, last_string_end))
+                    start = t.location
+            last_string_end = t.location + len(t.jp_bytestring)
+        blocks.append((start, last_string_end))
+        for b in blocks:
+            print("(%s, %s)" % (hex(b[0]), hex(b[1])))
+        FILE_BLOCKS[file] = blocks
+
+
 
 for file in os.listdir('decompressed'):
     FILES.append(os.path.join('decompressed', file))

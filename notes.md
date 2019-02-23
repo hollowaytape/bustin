@@ -1,5 +1,5 @@
 ## Intro
-* Text is at CLM:BIN:0x3180, plain SJIS.
+* Text is at CLM.BIN:0x3180, plain SJIS.
 * Accepts ASCII just fine.
 
 ## Game
@@ -97,7 +97,10 @@
 
 	* ko no u su = 82 b1, 82 cc, 82 a4, 82 b7
 
-
+* Halfwidth text in gameplay mode:
+	* Load an 85 instead of 82 when it handles the fullwidth ascii.
+		* TBS.EXE:e4e1: set to 85 (font table hack)
+		* TBS.EXE:e41e: set to 02 (cursor hack)
 
 * Replaced "miru" with "Look". Only wants to display the first ascii letter.
 
@@ -108,19 +111,6 @@
 
 * MEnu text hack
 * 079f:d71c:
-* cmp ah, 80, jb d6b5 (change to jbe d746 (7617))
-* cmp ah, 9f; jbe d746
-
-d746: lodsb, jmp d6b5 (nop out lodsb)
-
-b48208c0 = mov ah, 82; or al, al; nop nop
-
-
-cmp al, 20
-jb d73e
-
-cmp al, 80
-jb d6b5
 
 starting at mov ah, al, put this instead:
 08c074f63c2072193c80720b3c9f76193ce0730be981ffb4829090eb099090
@@ -136,7 +126,8 @@ cmp al, e0
 jnb d73c
 jmp d6b5
 mov ah, 82
-add al, 1f
+nop
+nop
 jmp d743
 nop
 nop
@@ -145,3 +136,11 @@ Weird unexpected result? It gets outputted as halfwidth rather than fake fullwid
 
 Menu text is TBS.EXE:11030
 THat asm code is at TBS.EXE:e51d.
+
+
+## CLX
+* Beginning seems to have a big table of offsets. Since OPEN.CLX is a huge file, it is probably many images packed into one
+	* First thing is offset, second thing is length. (2a 02 00 00 eb 00 00 00 = seg at offset 22a is 3a long, next begins at 315)
+
+## GRP
+* My immediate impression is that this might just be a bitmap-type thing. Lots of repeated FF FF FF's, no attempt at compressing repeated things, etc

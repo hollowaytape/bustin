@@ -25,6 +25,23 @@ for filename in FILES_TO_REINSERT:
         # Ascii text hack for the main menu, see notes.md
         gamefile.edit(0xe51d, b'\x08\xc0\x74\xf6\x3c\x20\x72\x19\x3c\x80\x72\x0b\x3c\x9f\x76\x19\x3c\xe0\x73\x0b\xe9\x81\xff\xb4\x82\x90\x90\xeb\x09\x90\x90')
 
+        gamefile.edit(0xe4e1, b'\x85')  # font table
+        gamefile.edit(0xe41e, b'\x01')  # cursor
+
+        # Freeing up all of ascii space
+        gamefile.edit(0xe4c3, b'\x14')  # better jump
+        gamefile.edit(0xe4cb, b'\x0c')
+        gamefile.edit(0xe4d2, b'\x76\x04')
+        gamefile.edit(0xe4d4, b'\xfe\xc0\x90\x90\x90\x90\x90\x90\x90\x90')
+        #* TBS.EXE:e4e1: set to 85 (font table hack)
+        #* TBS.EXE:e41e: set to 02 (cursor hack)
+
+        # d6c2: 7614
+        # d6ca: 760c
+        # d6d2: 7604
+
+        # d6d4: 90909090909090909090041f
+
     """
     for block in FILE_BLOCKS[filename]:
         block = Block(gamefile, block)
