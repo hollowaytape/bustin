@@ -105,3 +105,43 @@
 
 0000 0100
 0000 0010
+
+* MEnu text hack
+* 079f:d71c:
+* cmp ah, 80, jb d6b5 (change to jbe d746 (7617))
+* cmp ah, 9f; jbe d746
+
+d746: lodsb, jmp d6b5 (nop out lodsb)
+
+b48208c0 = mov ah, 82; or al, al; nop nop
+
+
+cmp al, 20
+jb d73e
+
+cmp al, 80
+jb d6b5
+
+starting at mov ah, al, put this instead:
+08c074f63c2072193c80720b3c9f76193ce0730be981ffb4829090eb099090
+or al, al
+jz d717
+cmp al, 20
+jb d73e
+cmp al, 80
+jb d734
+cmp al, 9f
+jbe d746
+cmp al, e0
+jnb d73c
+jmp d6b5
+mov ah, 82
+add al, 1f
+jmp d743
+nop
+nop
+
+Weird unexpected result? It gets outputted as halfwidth rather than fake fullwidth. Yay!
+
+Menu text is TBS.EXE:11030
+THat asm code is at TBS.EXE:e51d.

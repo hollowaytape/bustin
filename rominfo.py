@@ -2,10 +2,52 @@
     Rom information for Tokyo Twilight Busters (PC-98).
 """
 
+import os
+
+ORIGINAL_ROM_PATH = 'original/Tokyo Twilight Busters.hdi'
+TARGET_ROM_PATH = 'patched/Tokyo Twilight Busters.hdi'
+DUMP_XLS_PATH = 'bustin_dump.xlsx'
+
+FILES_TO_REINSERT = [
+    'TBS.EXE',
+]
+
+FILES = []
+
+for file in os.listdir('decompressed'):
+    FILES.append(os.path.join('decompressed', file))
+
+inline_CTRL = {
+    b'[4]',
+    b'[5]',
+    b'[6]',
+    b'[7]',
+    b'[8]',
+    b'[9]',
+    b'[A]',
+    b'[B]',
+    b'[C]',
+    b'[D]',
+    b'[E]',
+    b'[F]',
+}
+
 CTRL = {
     0x01: b'[LN]',
     0x02: b'[WAIT]',
     0x03: b'[CLR]',
+    0x04: b'[4]',
+    0x05: b'[5]',
+    0x06: b'[6]',
+    0x07: b'[7]',
+    0x08: b'[8]',
+    0x09: b'[9]',
+    0x0a: b'[A]',
+    0x0b: b'[B]',
+    0x0c: b'[C]',
+    0x0d: b'[D]',
+    0x0e: b'[E]',
+    0x0f: b'[F]',
 
     0x16: b'\x82\xce',  # ば び  ぶ べ  ぼ ぱ ぴ  ぷ  ぺ ぽ
     0x17: b'\x82\xd1',
