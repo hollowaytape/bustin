@@ -12,6 +12,7 @@ DUMP_XLS_PATH = 'bustin_dump.xlsx'
 
 FILES_TO_REINSERT = [
     'TBS.EXE',
+    'CLM.BIN',
 ]
 
 FILES = [
@@ -30,13 +31,13 @@ FILES = [
     'RTD/MSGS.010',
     'RTD/MSGS.012',
     'RTD/MSGS.013',
-    'RTD/RTMS.001',
-    'RTD/RTMS.004',
-    'RTD/RTMS.005',
-    'RTD/RTMS.007',
-    'RTD/RTMS.010',
-    'RTD/RTMS.012',
-    'RTD/RTMS.013',
+    #'RTD/RTMS.001',
+    #'RTD/RTMS.004',
+    #'RTD/RTMS.005',
+    #'RTD/RTMS.007',
+    #'RTD/RTMS.010',
+    #'RTD/RTMS.012',
+    #'RTD/RTMS.013',
     'ABG/TOKYO.DAT',
     'DAT/INIT.DAT',
 ]
@@ -49,7 +50,7 @@ FILE_BLOCKS = {
         (0x10e8e, 0x10ea3),
         (0x10f1c, 0x11014),
         (0x11030, 0x110de),
-        (0x11060, 0x112c6),
+        (0x11160, 0x112c6),
         (0x112e6, 0x11311),
         (0x1131e, 0x11334),
         (0x1134b, 0x11370),
@@ -62,6 +63,13 @@ FILE_BLOCKS = {
         (0x16a7b, 0x16a93),
         (0x16ac3, 0x16b39),
         (0x16b64, 0x16cf2),
+    ],
+    'CLM.BIN': [
+        (0x2698, 0x4f1e),
+        (0x4f4e, 0x4f90),
+        (0x4fd0, 0x505e),
+        (0x509f, 0x5110),
+        (0x5217, 0x53f6),
     ],
     'STM.BIN': [
         (0x1586, 0x15ff),
@@ -120,7 +128,7 @@ for file in FILES:
 
 
 
-for file in os.listdir('decompressed'):
+for file in os.listdir('original/decompressed'):
     FILES.append(os.path.join('decompressed', file))
 
 inline_CTRL = {
@@ -139,6 +147,7 @@ inline_CTRL = {
 }
 
 CTRL = {
+    0x00: b'[END]',
     0x01: b'[LN]',
     0x02: b'[WAIT]',
     0x03: b'[CLR]',
@@ -225,7 +234,7 @@ CTRL = {
     0xa1: b'\x81\x42',
     0xa2: b'\x81\x75',
     0xa3: b'\x81\x76',
-    0xa4: b'\x81\x41',
+    0xa4: b'\x81\x41',     # The game prefers to use 0x2c for 8141
     0xa5: b'\x81\x45',
 
     # a6-e0 programmatically
@@ -255,6 +264,7 @@ for n in range(0x41, 0x5b):
 for n in range(0x61, 0x7b):
     CTRL[n] = b'\x82' + (0x1f + n).to_bytes(1, 'little')
 
+
 # There's one (wo) at the end, and the rest are one too low. Shift and see what happens
 ls = [ b'\xf0', b'\x9f', b'\xa1', b'\xa3', b'\xa5', b'\xa7', b'\xe1', b'\xe3', b'\xe5', 
        b'\xc1', b'\x00', b'\xa0', b'\xa2', b'\xa4', b'\xa6', b'\xa8', b'\xa9', b'\xab', 
@@ -269,3 +279,6 @@ for n in range(0xa6, 0xe1):
     CTRL[n] = b'\x82' + ls[n - 0xa6]
 
 CTRL[0xb1] = b'\x81\x5b'   # long dash; no idea why this overrides the list entry
+
+inverse_CTRL = {v: k for k, v in CTRL.items() if k != 0xa4}
+#inverse_CTRL.remove(0xa4)

@@ -4,18 +4,16 @@
 """
 
 import os
-from rominfo import CTRL
+from rominfo import CTRL, inverse_CTRL
 
 def decompress(filename):
     # Flip all the bits first
-    with open("TBS/SCN/%s" % filename, 'rb') as f:
-        contents = f.read()
-        with open("flipped/%s" % filename, 'wb') as g:
-            for c in contents:
-                g.write((c ^ 0xff).to_bytes(1, 'little'))
+    with open("original/SCN/%s" % filename, 'rb') as f:
+        flipped_contents = f.read()
+        contents = b''
+        for c in flipped_contents:
+            contents += (c ^ 0xff).to_bytes(1, 'little')
 
-    with open("flipped/%s" % filename, 'rb') as f:
-        contents = f.read()
         cursor = 0
         result = b''
         while cursor < len(contents):
@@ -49,7 +47,7 @@ def decompress(filename):
                 result += CTRL[b]
 
             # Punctuation 2
-            elif b  <= 0x40:
+            elif b <= 0x40:
                 result += CTRL[b]
 
             # Fullwidth caps
@@ -82,12 +80,59 @@ def decompress(filename):
             elif b <= 0xff:
                 result += CTRL[b]
             cursor += 1
-        with open("decompressed/%s" % filename, 'wb') as g:
+        with open("original/decompressed/%s" % filename, 'wb') as g:
             g.write(result)
+
+def compress(filename):
+    with open("patched/decompressed/%s" % filename, 'rb') as f:
+        contents = f.read()
+
+        result = b''
+        cursor = 0
+        while cursor < len(contents):
+            b = contents[cursor]
+
+            # two-byte commands, two-byte Japanese text
+            if b <= 0x16 or 0x80 <= b <= 0x9f or 0xe0 <= b <= 0xea:
+                cursor += 1
+                b2 = contents[cursor]
+
+                code = b'' + b.to_bytes(1, 'little') + b2.to_bytes(1, 'little')
+                #print(code)
+                if code in inverse_CTRL:
+                    #print(code, "is a ctrl code for", hex(inverse_CTRL[code]))
+                    result += inverse_CTRL[code].to_bytes(1, 'little')
+                else:
+                    #print(code, "is not a control code")
+                    result += b.to_bytes(1, 'little')
+                    result += b2.to_bytes(1, 'little')
+
+            # Defined control codes within brackets
+            elif contents[cursor] == 0x5b: # '['
+                code = b''
+                while contents[cursor] != 0x5d:
+                    code += contents[cursor].to_bytes(1, 'little')
+                    cursor += 1
+                code += contents[cursor].to_bytes(1, 'little')
+                assert code in inverse_CTRL, code
+                result += inverse_CTRL[code].to_bytes(1, 'little')
+
+            # Ascii text
+            else:
+                result += contents[cursor].to_bytes(1, 'little')
+
+            cursor += 1
+
+    with open("patched/%s" % filename, 'wb') as g:
+        # Flip all the bytes again
+        for r in result:
+            g.write(r.to_bytes(1, 'little')) # FOr a sanity check first
+            #g.write(r ^ 0xff)
 
 if __name__ == "__main__":
     for filename in os.listdir("TBS/SCN"):
         if filename.endswith(".MCV"):
             print(filename)
             decompress(filename)
-    #decompress("SEN000A.MCV")
+
+    compress("SEN013R.MCV")

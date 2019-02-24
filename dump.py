@@ -78,7 +78,7 @@ def dump(files):
 
                     # End of continuous SJIS string, so add the buffer to the strings and reset buffer
                     else:
-                        sjis_strings.append((sjis_buffer_start, sjis_buffer))
+                        sjis_strings.append((sjis_buffer_start+block[0], sjis_buffer))
                         sjis_buffer = b""
                         sjis_buffer_start = cursor+1
                     cursor += 1
@@ -120,6 +120,7 @@ def dump(files):
                     worksheet.write(row, 0, loc)
                     worksheet.write(row, 1, jp)
                     worksheet.write(row, 2, '=LEN(B%s)' % str(row+1))
+                    worksheet.write(row, 4, '=LEN(D%s)' % str(row+1))
                     #worksheet.write(row, 3, filename)
                     row += 1
 
