@@ -4,6 +4,7 @@
 """
 
 import os
+from mcv import compress
 
 from rominfo import ORIGINAL_ROM_PATH, TARGET_ROM_PATH, DUMP_XLS_PATH, FILES_TO_REINSERT, FILE_BLOCKS
 from romtools.disk import Disk, Gamefile, Block
@@ -15,7 +16,11 @@ TargetTBS = Disk(TARGET_ROM_PATH)
 
 for filename in FILES_TO_REINSERT:
     path_in_disk = "TBS\\"
-    gamefile_path = os.path.join('original', filename)
+    if filename.endswith(".MCV"):
+        print(filename)
+        gamefile_path = os.path.join('original/decompressed/', filename)
+    else:
+        gamefile_path = os.path.join('original', filename)
     print(filename)
     gamefile = Gamefile(gamefile_path, disk=OriginalTBS, dest_disk=TargetTBS)
 
@@ -38,32 +43,17 @@ for filename in FILES_TO_REINSERT:
         print(block)
         previous_text_offset = block.start
         diff = 0
-        for i, t in enumerate(Dump.get_translations(block, include_blank=True)):
+        if filename.endswith(".MCV"):
+            sheet_name = filename.split("/")[-1]
+        else:
+            sheet_name = filename
+        for i, t in enumerate(Dump.get_translations(block, include_blank=True, sheet_name=sheet_name)):
             #print(t.english)
             loc_in_block = t.location - block.start + diff
 
             this_diff = len(t.en_bytestring) - len(t.jp_bytestring)
 
             if t.english == b'' or t.english == t.japanese:
-                """
-                if filename.endswith('MSD') and MAPPING_MODE:
-                    #print(this_diff)
-                    if this_diff >= -8:
-                        id_string = b'%i' % (i+2)
-                    else:
-                        id_string = b'%b-%i' % (filename[:4].encode('ascii'), (i+2))
-                    t.en_bytestring += id_string
-                    #print(t.en_bytestring)
-                    while len(t.en_bytestring) < len(t.jp_bytestring):
-                        t.en_bytestring += b' '
-                    #if len(id_string) < len(t.jp_bytestring):
-                    #    print(id_string)
-                    #    t.en_bytestring = id_string + t.jp_bytestring[len(id_string):]
-                    this_diff = len(t.en_bytestring) - len(t.jp_bytestring)
-                    #print(t.en_bytestring)
-                    assert this_diff == 0
-                """
-
                 #print(hex(t.location), t.english, "Blank string")
                 this_diff = 0
                 #print("Diff is", diff)
@@ -103,4 +93,12 @@ for filename in FILES_TO_REINSERT:
         #print("Looking for:", block.original_blockstring)
         block.incorporate()
 
-    gamefile.write(path_in_disk=path_in_disk)
+    if filename.endswith(".MCV"):
+        gamefile.write(path_in_disk=path_in_disk, skip_disk=True, dest_path=filename.replace("original/", ""))
+        compress(filename)
+        compressed_filename = 'patched/%s' % filename
+        print(compressed_filename)
+        cgf = Gamefile(compressed_filename, disk=OriginalTBS, dest_disk=TargetTBS)
+        cgf.write(path_in_disk='TBS/SCN')
+    else:
+        gamefile.write(path_in_disk=path_in_disk)

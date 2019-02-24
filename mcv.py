@@ -124,10 +124,11 @@ def compress(filename):
             cursor += 1
 
     with open("patched/%s" % filename, 'wb') as g:
-        # Flip all the bytes again
-        for r in result:
-            g.write(r.to_bytes(1, 'little')) # FOr a sanity check first
-            #g.write(r ^ 0xff)
+        with open("patched/%s" % filename.replace(".MCV", "_readable.MCV"), 'wb') as h:
+            # Flip all the bytes again
+            for r in result:
+                h.write(r.to_bytes(1, 'little')) # FOr a sanity check first
+                g.write((r ^ 0xff).to_bytes(1, 'little'))
 
 if __name__ == "__main__":
     for filename in os.listdir("TBS/SCN"):

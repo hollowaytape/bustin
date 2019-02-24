@@ -13,6 +13,7 @@ DUMP_XLS_PATH = 'bustin_dump.xlsx'
 FILES_TO_REINSERT = [
     'TBS.EXE',
     'CLM.BIN',
+    'SEN013R.MCV',
 ]
 
 FILES = [
@@ -71,6 +72,15 @@ FILE_BLOCKS = {
         (0x509f, 0x5110),
         (0x5217, 0x53f6),
     ],
+    'RTM.BIN': [
+        (0xeb72, 0xece0),
+        (0xf2ae, 0xf2d2),
+        (0xf2dc, 0x12c27),
+        (0x16984, 0x169c1),
+        (0x169f6, 0x16b0b),
+        (0x16b3b, 0x16b84),
+        (0x16baa, 0x16bfc),
+    ],
     'STM.BIN': [
         (0x1586, 0x15ff),
         (0x1748, 0x177f),
@@ -78,8 +88,20 @@ FILE_BLOCKS = {
         (0x19ff, 0x2125),
         (0x213b, 0x2218),
     ],
+    'MPM.BIN': [
+        (0x4040, 0x4bdf),
+        (0x8ca3, 0x8cae),
+    ],
+    'EDM.BIN': [
+        (0x5009, 0x5e13),
+        (0x606d, 0x6729),
+    ],
     'RTD/MSGS.001': [
         (0xf4, 0x8c44),
+    ],
+
+    'SEN013R.MCV': [
+        (0x0, 0x1250),
     ],
 }
 

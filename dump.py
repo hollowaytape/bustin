@@ -18,10 +18,7 @@ THRESHOLD = 4
 
 def dump(files):
     for filename in files:
-        if filename.endswith(".MCV"):
-            file_path = filename
-        else:
-            file_path = os.path.join('TBS', filename)
+        file_path = os.path.join('original/', filename)
         #if "/" in filename:
         #    sheet_name = filename.split("/")[1]
         sheet_name = filename.replace("/", "-")
@@ -69,12 +66,6 @@ def dump(files):
                     # ASCII text
                     elif 0x20 <=block_contents[cursor] <= 0x7e and ASCII_MODE in (1, 2):
                         sjis_buffer += block_contents[cursor].to_bytes(1, byteorder='little')
-
-                    # C string formatting with %
-                    #elif block_contents[cursor] == 0x25:
-                    #    #sjis_buffer += b'%'
-                    #    cursor += 1
-                    #    if block_contents[cursor]
 
                     # End of continuous SJIS string, so add the buffer to the strings and reset buffer
                     else:
