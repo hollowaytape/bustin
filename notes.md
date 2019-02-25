@@ -144,3 +144,8 @@ THat asm code is at TBS.EXE:e51d.
 
 ## GRP
 * My immediate impression is that this might just be a bitmap-type thing. Lots of repeated FF FF FF's, no attempt at compressing repeated things, etc
+
+
+## Pointers
+* SO there's definitely a pointer to the first bit of text in SEN013R, and then the one after the room gets displayed.
+	* First string, which is "5a 5a 5a 5a 5e fd fc": ESI value is 0xed

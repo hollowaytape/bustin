@@ -12,6 +12,7 @@ DUMP_XLS_PATH = 'bustin_dump.xlsx'
 
 FILES_TO_REINSERT = [
     'TBS.EXE',
+    'AVM.BIN',
     'CLM.BIN',
     'SEN013R.MCV',
 ]
@@ -65,6 +66,21 @@ FILE_BLOCKS = {
         (0x16ac3, 0x16b39),
         (0x16b64, 0x16cf2),
     ],
+    'AVM.BIN': [
+        (0x5ed6, 0x60b6),
+        (0x616e, 0x621c),
+        (0x6f38, 0x6fe3),
+        (0x7087, 0x719a),
+        (0x7355, 0x7390),
+        (0x741f, 0x7dd6),
+        (0x7e44, 0x7e61),
+        (0x7f9a, 0x805d),
+        (0x8095, 0x8102),
+        (0x8222, 0x824c),
+        (0x82d0, 0x83c5),
+        (0x83d5, 0x84b4),
+        (0x84c5, 0x8cd2),
+    ],
     'CLM.BIN': [
         (0x2698, 0x4f1e),
         (0x4f4e, 0x4f90),
@@ -103,6 +119,10 @@ FILE_BLOCKS = {
     'SEN013R.MCV': [
         (0x0, 0x1250),
     ],
+}
+
+POINTER_CONSTANT = {
+    'AVM.BIN': 0x5c90,
 }
 
 
