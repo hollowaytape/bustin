@@ -7,6 +7,7 @@ import sys
 import os
 import xlsxwriter
 from rominfo import FILES, FILE_BLOCKS, inline_CTRL
+from mcv import compress
 
 ASCII_MODE = 1
 # 0 = none
@@ -27,93 +28,111 @@ def dump(files):
         row = 1
         worksheet = workbook.add_worksheet(sheet_name)
         worksheet.write(0, 0, 'Offset', header)
-        worksheet.write(0, 1, 'Japanese', header)
-        worksheet.write(0, 2, 'JP_Len', header)
-        worksheet.write(0, 3, 'English', header)
-        worksheet.write(0, 4, 'EN_Len', header)
-        worksheet.write(0, 5, 'Comments', header)
+        worksheet.write(0, 1, 'Compressed Offset', header)
+        worksheet.write(0, 2, 'Japanese', header)
+        worksheet.write(0, 3, 'JP_Len', header)
+        worksheet.write(0, 4, 'English', header)
+        worksheet.write(0, 5, 'EN_Len', header)
+        worksheet.write(0, 6, 'Comments', header)
 
         worksheet.set_column('A:A', 8)
-        worksheet.set_column('B:B', 60)
-        worksheet.set_column('C:C', 15)
-        worksheet.set_column('D:D', 60)
+        worksheet.set_column('C:C', 60)
+        worksheet.set_column('D:D', 15)
+        worksheet.set_column('E:E', 60)
+
 
 
         with open(file_path, 'rb') as f:
             contents = f.read()
 
-            if filename not in FILE_BLOCKS:
-                blocks = [(0, len(contents))]
-            else:
-                blocks = FILE_BLOCKS[filename]
+        if filename.endswith(".MCV"):
+            with open(filename.replace("decompressed\\", "original\\SCN\\"), 'rb') as g:
+                compressed_cursor = 0
+                compressed_contents = g.read()
 
-            for block in blocks:
-                block_contents = contents[block[0]:block[1]]
-                cursor = 0
-                sjis_buffer = b""
-                sjis_buffer_start = 0
-                sjis_strings = []
+        if filename not in FILE_BLOCKS:
+            blocks = [(0, len(contents))]
+        else:
+            blocks = FILE_BLOCKS[filename]
 
-                while cursor < len(block_contents):
+        for block in blocks:
+            block_contents = contents[block[0]:block[1]]
+            cursor = 0
+            sjis_buffer = b""
+            sjis_buffer_start = 0
+            sjis_strings = []
 
-                    # First byte of SJIS text. Read the next one, too
-                    if (0x80 <= block_contents[cursor] <= 0x9f or 0xe0 <= block_contents[cursor] <= 0xef) and cursor+1 < len(block_contents):
-                        #print(bytes(block_contents[cursor]))
-                        sjis_buffer += block_contents[cursor].to_bytes(1, byteorder='little')
-                        cursor += 1
-                        sjis_buffer += block_contents[cursor].to_bytes(1, byteorder='little')
+            while cursor < len(block_contents):
 
-                    # ASCII text
-                    elif 0x20 <=block_contents[cursor] <= 0x7e and ASCII_MODE in (1, 2):
-                        sjis_buffer += block_contents[cursor].to_bytes(1, byteorder='little')
-
-                    # End of continuous SJIS string, so add the buffer to the strings and reset buffer
-                    else:
-                        sjis_strings.append((sjis_buffer_start+block[0], sjis_buffer))
-                        sjis_buffer = b""
-                        sjis_buffer_start = cursor+1
+                # First byte of SJIS text. Read the next one, too
+                if (0x80 <= block_contents[cursor] <= 0x9f or 0xe0 <= block_contents[cursor] <= 0xef) and cursor+1 < len(block_contents):
+                    #print(bytes(block_contents[cursor]))
+                    sjis_buffer += block_contents[cursor].to_bytes(1, byteorder='little')
                     cursor += 1
-                    #print(sjis_buffer)
+                    sjis_buffer += block_contents[cursor].to_bytes(1, byteorder='little')
 
-                    if any([sjis_buffer.endswith(x) for x in (b'[END]', b'[WAIT]', b'[LN]', b'[CLR]')]):
-                        sjis_buffer = sjis_buffer.rstrip(b'[END]').rstrip(b'[WAIT]').rstrip(b'[LN]').rstrip(b'[CLR]')
-                        sjis_strings.append((sjis_buffer_start+block[0], sjis_buffer))
-                        sjis_buffer = b''
-                        sjis_buffer_start = cursor
+                # ASCII text
+                elif 0x20 <=block_contents[cursor] <= 0x7e and ASCII_MODE in (1, 2):
+                    sjis_buffer += block_contents[cursor].to_bytes(1, byteorder='little')
 
-                # Catch anything left after exiting the loop
-                if sjis_buffer:
+                # End of continuous SJIS string, so add the buffer to the strings and reset buffer
+                else:
                     sjis_strings.append((sjis_buffer_start+block[0], sjis_buffer))
+                    sjis_buffer = b""
+                    sjis_buffer_start = cursor+1
+                cursor += 1
+                #print(sjis_buffer)
+
+                if any([sjis_buffer.endswith(x) for x in (b'[END]', b'[WAIT]', b'[LN]', b'[CLR]')]):
+                    sjis_buffer = sjis_buffer.replace(b'[END]', b'')
+                    sjis_buffer = sjis_buffer.replace(b'[WAIT]', b'')
+                    sjis_buffer = sjis_buffer.replace(b'[LN]', b'')
+                    sjis_buffer = sjis_buffer.replace(b'[CLR]', b'')
+                    sjis_strings.append((sjis_buffer_start+block[0], sjis_buffer))
+                    sjis_buffer = b''
+                    sjis_buffer_start = cursor
+
+            # Catch anything left after exiting the loop
+            if sjis_buffer:
+                sjis_strings.append((sjis_buffer_start+block[0], sjis_buffer))
 
 
-                if len(sjis_strings) == 0:
+            if len(sjis_strings) == 0:
+                continue
+
+            for s in sjis_strings:
+                if len(s[1]) < THRESHOLD:
                     continue
 
-                for s in sjis_strings:
-                    if len(s[1]) < THRESHOLD:
-                        continue
+                loc = '0x' + hex(s[0]).lstrip('0x').zfill(5)
+                try:
+                    jp = s[1].decode('shift-jis')
+                except UnicodeDecodeError:
+                    print("Couldn't decode that")
+                    continue
 
-                    loc = '0x' + hex(s[0]).lstrip('0x').zfill(5)
-                    try:
-                        jp = s[1].decode('shift-jis')
-                    except UnicodeDecodeError:
-                        print("Couldn't decode that")
-                        continue
+                if len(jp.strip()) == 0:
+                    continue
 
-                    if len(jp.strip()) == 0:
-                        continue
+                if '=' in jp:
+                    jp = jp.replace('=', '[=]')
 
-                    if '=' in jp:
-                        jp = jp.replace('=', '[=]')
+                print(loc, jp)
 
-                    print(loc, jp)
+                if filename.endswith(".MCV"):
+                    comp = compress(s[1])
+                    substr = compressed_contents[compressed_cursor:]
+                    i = substr.find(comp) + compressed_cursor
+                    compressed_cursor += len(comp)
+                    compressed_loc = '0x' + hex(i).lstrip('0x').zfill(5)
+                    worksheet.write(row, 1, compressed_loc)
 
-                    worksheet.write(row, 0, loc)
-                    worksheet.write(row, 1, jp)
-                    worksheet.write(row, 2, '=LEN(B%s)' % str(row+1))
-                    worksheet.write(row, 4, '=LEN(D%s)' % str(row+1))
-                    #worksheet.write(row, 3, filename)
-                    row += 1
+                worksheet.write(row, 0, loc)
+                worksheet.write(row, 2, jp)
+                worksheet.write(row, 3, '=LEN(C%s)' % str(row+1))
+                worksheet.write(row, 5, '=LEN(E%s)' % str(row+1))
+                #worksheet.write(row, 3, filename)
+                row += 1
 
     workbook.close()
 

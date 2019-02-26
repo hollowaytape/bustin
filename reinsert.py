@@ -32,10 +32,10 @@ for filename in FILES_TO_REINSERT:
         gamefile.edit(0xe41e, b'\x01')  # cursor change
 
         # Freeing up all of ascii space for "direct" display
-        gamefile.edit(0xe4c3, b'\x14')  # better jump
-        gamefile.edit(0xe4cb, b'\x0c')
-        gamefile.edit(0xe4d2, b'\x76\x04')
-        gamefile.edit(0xe4d4, b'\xfe\xc0\x90\x90\x90\x90\x90\x90\x90\x90')
+        #gamefile.edit(0xe4c3, b'\x14')  # better jump
+        #gamefile.edit(0xe4cb, b'\x0c')
+        #gamefile.edit(0xe4d2, b'\x76\x04')
+        #gamefile.edit(0xe4d4, b'\xfe\xc0\x90\x90\x90\x90\x90\x90\x90\x90')
 
 
     for block in FILE_BLOCKS[filename]:

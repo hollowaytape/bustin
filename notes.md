@@ -149,3 +149,13 @@ THat asm code is at TBS.EXE:e51d.
 ## Pointers
 * SO there's definitely a pointer to the first bit of text in SEN013R, and then the one after the room gets displayed.
 	* First string, which is "5a 5a 5a 5a 5e fd fc": ESI value is 0xed
+	* This loads only a part of SEN013R into that part in memory, from 0x421 to the end
+	* Important values: 0x421, 0x00ed
+		* Maybe these pointers are in the code in TBS.EXE? Check this out
+* The next text that is displayed is actually from MSGS.001, at 0x3f37. (or MSGS.013, at 0xf4.)
+	* And then the next text after she sits up is back at the next string in SEN013R. (0xd5e uncompressed, 0x281 compressed) (or maybe 0x280?)
+		* 0x11a2 in TBS.EXE?
+		* Doesn't appear to be any instances of 280 or 281...
+* Alright. That next text's pointer value is 0x6a2 (0x281 + 0x421. So just take the compressed location, ignore the weird ESI value/0x421 fuckery) which is found at SEN013R.SCV:0x19e8.
+	* 0e05 is also a value with a 16 prefix.
+	* find_pointers.py should look for all things preceded by a016. (and maybe followed by a4)

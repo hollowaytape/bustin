@@ -14,6 +14,11 @@ FILES_TO_REINSERT = [
     'TBS.EXE',
     'AVM.BIN',
     'CLM.BIN',
+    'STM.BIN',
+    'SEN013R.MCV',
+]
+
+FILES_WITH_POINTERS = [
     'SEN013R.MCV',
 ]
 
@@ -33,13 +38,13 @@ FILES = [
     'RTD/MSGS.010',
     'RTD/MSGS.012',
     'RTD/MSGS.013',
-    #'RTD/RTMS.001',
-    #'RTD/RTMS.004',
-    #'RTD/RTMS.005',
-    #'RTD/RTMS.007',
-    #'RTD/RTMS.010',
-    #'RTD/RTMS.012',
-    #'RTD/RTMS.013',
+    'RTD/RTMS.001',
+    'RTD/RTMS.004',
+    'RTD/RTMS.005',
+    'RTD/RTMS.007',
+    'RTD/RTMS.010',
+    'RTD/RTMS.012',
+    'RTD/RTMS.013',
     'ABG/TOKYO.DAT',
     'DAT/INIT.DAT',
 ]
@@ -88,6 +93,30 @@ FILE_BLOCKS = {
         (0x509f, 0x5110),
         (0x5217, 0x53f6),
     ],
+    'FTM.BIN': [
+        (0x3c9f, 0x3d0c),
+        (0x3e2c, 0x3e36),
+        (0x3e41, 0x3e55),
+        (0x3eaa, 0x3f5e),
+        (0x3fbb, 0x401f),
+        (0x424b, 0x47fb),
+        (0x4833, 0x4c06),
+        (0x4c36, 0x4f4a),
+        (0x4f7a, 0x5101),
+        (0x5131, 0x53a5),
+        (0x53dd, 0x5564),
+        (0x5634, 0x58bb),
+        (0x58cb, 0x593a),
+        (0x5973, 0x5b85),
+        (0x5bc1, 0x5c40),
+        (0x5c52, 0x5d38),
+        (0x5d5c, 0x5f46),
+        (0x5f64, 0x60ae),
+        (0x60d1, 0x630d),
+        (0x6392, 0x6577),
+        (0x6587, 0x6ed7),
+        (0x6eed, 0x71de), # definitely split this one up more
+    ],
     'RTM.BIN': [
         (0xeb72, 0xece0),
         (0xf2ae, 0xf2d2),
@@ -101,7 +130,8 @@ FILE_BLOCKS = {
         (0x1586, 0x15ff),
         (0x1748, 0x177f),
         (0x180a, 0x19ed),
-        (0x19ff, 0x2125),
+        (0x19ff, 0x20c5),
+        (0x20c5, 0x2125),
         (0x213b, 0x2218),
     ],
     'MPM.BIN': [
@@ -123,9 +153,10 @@ FILE_BLOCKS = {
 
 POINTER_CONSTANT = {
     'AVM.BIN': 0x5c90,
+    'SEN013R.MCV': 0x0,
 }
 
-
+"""
 # Auto-generate file blocks when they are not manually defined
 Dump = DumpExcel(DUMP_XLS_PATH)
 OriginalTBS = Disk(ORIGINAL_ROM_PATH, dump_excel=Dump)
@@ -166,8 +197,9 @@ for file in FILES:
         blocks.append((start, last_string_end))
         for b in blocks:
             print("(%s, %s)" % (hex(b[0]), hex(b[1])))
-        FILE_BLOCKS[file] = blocks
+        #FILE_BLOCKS[file] = blocks
 
+"""
 
 
 for file in os.listdir('original/decompressed'):

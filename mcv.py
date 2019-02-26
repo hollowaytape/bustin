@@ -6,7 +6,7 @@
 import os
 from rominfo import CTRL, inverse_CTRL
 
-def decompress(filename):
+def decompress_file(filename):
     # Flip all the bits first
     with open("original/SCN/%s" % filename, 'rb') as f:
         flipped_contents = f.read()
@@ -83,48 +83,59 @@ def decompress(filename):
         with open("original/decompressed/%s" % filename, 'wb') as g:
             g.write(result)
 
-def compress(filename):
+def compress(s):
+    result = b''
+    cursor = 0
+    print(len(s))
+    while cursor < len(s):
+        b = s[cursor]
+
+        # two-byte commands, two-byte Japanese text
+        if b <= 0x16 or 0x80 <= b <= 0x9f or 0xe0 <= b <= 0xea:
+            cursor += 1
+            b2 = s[cursor]
+
+            code = b'' + b.to_bytes(1, 'little') + b2.to_bytes(1, 'little')
+            #print(code)
+            if code in inverse_CTRL:
+                #print(code, "is a ctrl code for", hex(inverse_CTRL[code]))
+                result += inverse_CTRL[code].to_bytes(1, 'little')
+            else:
+                #print(code, "is not a control code")
+                result += b.to_bytes(1, 'little')
+                result += b2.to_bytes(1, 'little')
+
+        # Defined control codes within brackets
+        elif s[cursor] == 0x5b: # '['
+            code = b''
+            while s[cursor] != 0x5d:
+                code += s[cursor].to_bytes(1, 'little')
+                cursor += 1
+            code += s[cursor].to_bytes(1, 'little')
+            assert code in inverse_CTRL, code
+            result += inverse_CTRL[code].to_bytes(1, 'little')
+
+        # Ascii text
+        else:
+            result += s[cursor].to_bytes(1, 'little')
+
+        cursor += 1
+
+    flipped_result = b''
+    for ch in result:
+        flipped_result += (ch ^ 0xff).to_bytes(1, 'little')
+
+    return flipped_result
+
+def compress_file(filename):
     with open("patched/decompressed/%s" % filename, 'rb') as f:
         contents = f.read()
 
-        result = b''
-        cursor = 0
-        while cursor < len(contents):
-            b = contents[cursor]
+    result = compress(contents)
 
-            # two-byte commands, two-byte Japanese text
-            if b <= 0x16 or 0x80 <= b <= 0x9f or 0xe0 <= b <= 0xea:
-                cursor += 1
-                b2 = contents[cursor]
-
-                code = b'' + b.to_bytes(1, 'little') + b2.to_bytes(1, 'little')
-                #print(code)
-                if code in inverse_CTRL:
-                    #print(code, "is a ctrl code for", hex(inverse_CTRL[code]))
-                    result += inverse_CTRL[code].to_bytes(1, 'little')
-                else:
-                    #print(code, "is not a control code")
-                    result += b.to_bytes(1, 'little')
-                    result += b2.to_bytes(1, 'little')
-
-            # Defined control codes within brackets
-            elif contents[cursor] == 0x5b: # '['
-                code = b''
-                while contents[cursor] != 0x5d:
-                    code += contents[cursor].to_bytes(1, 'little')
-                    cursor += 1
-                code += contents[cursor].to_bytes(1, 'little')
-                assert code in inverse_CTRL, code
-                result += inverse_CTRL[code].to_bytes(1, 'little')
-
-            # Ascii text
-            else:
-                result += contents[cursor].to_bytes(1, 'little')
-
-            cursor += 1
-
-    with open("patched/%s" % filename, 'wb') as g:
-        with open("patched/%s" % filename.replace(".MCV", "_readable.MCV"), 'wb') as h:
+    # Switching g and h to double-flip the human-readable one
+    with open("patched/%s" % filename, 'wb') as h:
+        with open("patched/%s" % filename.replace(".MCV", "_readable.MCV"), 'wb') as g:
             # Flip all the bytes again
             for r in result:
                 h.write(r.to_bytes(1, 'little')) # FOr a sanity check first
@@ -134,6 +145,6 @@ if __name__ == "__main__":
     for filename in os.listdir("TBS/SCN"):
         if filename.endswith(".MCV"):
             print(filename)
-            decompress(filename)
+            decompress_file(filename)
 
-    compress("SEN013R.MCV")
+    compress_file("SEN013R.MCV")
