@@ -40,7 +40,10 @@ def dump(files):
         worksheet.set_column('D:D', 15)
         worksheet.set_column('E:E', 60)
 
-
+        if "RTMS" in filename or "MSGS" in filename or "DAT" in filename:
+            ASCII_MODE = 0
+        else:
+            ASCII_MODE = 2
 
         with open(file_path, 'rb') as f:
             contents = f.read()
@@ -75,6 +78,9 @@ def dump(files):
                 elif 0x20 <=block_contents[cursor] <= 0x7e and ASCII_MODE in (1, 2):
                     sjis_buffer += block_contents[cursor].to_bytes(1, byteorder='little')
 
+                elif block_contents[cursor] in inline_CTRL and len(sjis_buffer) > 0:
+                    sjis_buffer += inline_CTRL[block_contents[cursor]]
+
                 # End of continuous SJIS string, so add the buffer to the strings and reset buffer
                 else:
                     sjis_strings.append((sjis_buffer_start+block[0], sjis_buffer))
@@ -88,6 +94,9 @@ def dump(files):
                     sjis_buffer = sjis_buffer.replace(b'[WAIT]', b'')
                     sjis_buffer = sjis_buffer.replace(b'[LN]', b'')
                     sjis_buffer = sjis_buffer.replace(b'[CLR]', b'')
+                    for ct in inline_CTRL:
+                        if sjis_buffer.endswith(inline_CTRL[ct]):
+                            sjis_buffer = sjis_buffer.replace(inline_CTRL[ct], b'')
                     sjis_strings.append((sjis_buffer_start+block[0], sjis_buffer))
                     sjis_buffer = b''
                     sjis_buffer_start = cursor
