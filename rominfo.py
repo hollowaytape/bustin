@@ -9,12 +9,13 @@ from romtools.disk import Disk, Gamefile
 ORIGINAL_ROM_PATH = 'original/Tokyo Twilight Busters.hdi'
 TARGET_ROM_PATH = 'patched/Tokyo Twilight Busters.hdi'
 DUMP_XLS_PATH = 'bustin_dump.xlsx'
+POINTER_XLS_PATH = 'bustin_pointer_dump.xlsx'
 
 FILES_TO_REINSERT = [
-    'TBS.EXE',
-    'AVM.BIN',
-    'CLM.BIN',
-    'STM.BIN',
+    #'TBS.EXE',
+    #'AVM.BIN',
+    #'CLM.BIN',
+    #'STM.BIN',
     'SEN013R.MCV',
 ]
 

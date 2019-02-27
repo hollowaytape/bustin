@@ -78,7 +78,7 @@ for gamefile in FILES_WITH_POINTERS:
             pointers = capture_pointers_from_function(only_hex, regex)
 
             for p in pointers:
-                print(p)
+                #print(p)
                 # Different offsets for each regex?
 
                 if regex == pointer_regex:
@@ -91,6 +91,8 @@ for gamefile in FILES_WITH_POINTERS:
                 pointer_location = '0x%05x' % pointer_location
 
                 all_locations = [int(pointer_location, 16),]
+
+                print(hex(text_location), pointer_location)
 
                 #print(pointer_locations)
 
@@ -112,11 +114,7 @@ for gamefile in FILES_WITH_POINTERS:
         itemlist = pointer_locations.items()
 
     for (gamefile, text_location), pointer_locations in itemlist:
-        if gamefile.filename == 'POSM.EXE':
-            separator = b'\x00'
-        else:
-            separator = b'\x0d'
-        obj = BorlandPointer(gamefile, pointer_locations, text_location, separator=separator)
+        obj = BorlandPointer(gamefile, pointer_locations, text_location)
         #print(hex(text_location))
         #print(pointer_locations)
 
@@ -125,7 +123,7 @@ for gamefile in FILES_WITH_POINTERS:
             # Definitely don't use these. They were useful for pointer_lines calculation,
             # but they have served their purpose
             continue
-        print(gamefile)
+        #print(gamefile)
 
         for pointer_loc in pointer_locations:
             worksheet.write(row, 0, '0x' + hex(text_location).lstrip('0x').zfill(5))
