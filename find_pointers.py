@@ -10,9 +10,8 @@ from rominfo import FILE_BLOCKS, DUMP_XLS_PATH, FILES_WITH_POINTERS
 
 Dump = DumpExcel(DUMP_XLS_PATH)
 
-# Removing the 9a at the end of this one. Didn't show up in some pointers.
 pointer_regex = r'\\xa0\\x16\\x([0-f][0-f])\\x([0-f][0-f])'
-
+blank_regex = r'\\x([0-f][0-f])\\x([0-f][0-f])'
 
 def capture_pointers_from_function(hx, regex): 
     return re.compile(regex).finditer(hx, overlapped=True)
@@ -62,16 +61,21 @@ for gamefile in FILES_WITH_POINTERS:
         print(gamefile_path)
         bs = f.read()
 
-        # target_area = (GF.pointer_constant, len(bs))
-        #print(hex(target_area[0]), hex(target_area[1]))
+        target_areas = []
+        if not gamefile.endswith(".MCV"):
+            for t in Dump.get_translations(gamefile, include_blank=True):
+                target_areas.append((t.location, t.location+1))
 
         only_hex = u""
         for c in bs:
             only_hex += u'\\x%02x' % c
 
+        if gamefile.endswith('.EXE'):
+            other_regex = blank_regex
+        else:
+            other_regex = None
 
-        #print(pointer_regex)
-        for regex in (pointer_regex, ):
+        for regex in (pointer_regex, other_regex):
             if regex is None:
                 continue
             print(regex)
@@ -83,10 +87,26 @@ for gamefile in FILES_WITH_POINTERS:
 
                 if regex == pointer_regex:
                     pointer_location = p.start()//4 + 2
+                elif regex == blank_regex:
+                    pointer_location = p.start()//4
                 else:
                     raise Exception
 
                 text_location = int(location_from_pointer((p.group(1), p.group(2)), GF.pointer_constant), 16)
+                if text_location < POINTER_CONSTANT[gamefile] or pointer_location < POINTER_CONSTANT[gamefile]:
+                    continue
+
+                if any([block[0] <= pointer_location <= block[1] for block in FILE_BLOCKS[gamefile]]):
+                    continue
+
+                #if not any([block[0] <= text_location <= block[1] for block in FILE_BLOCKS[gamefile]]):
+                #    continue
+                if target_areas:
+                    if not any([area[0] <= text_location < area[1] for area in target_areas]):
+                        continue
+                    # That might fly in other games, but probably not this one. Should help with dupes
+                    if pointer_location > text_location:
+                        continue
 
                 pointer_location = '0x%05x' % pointer_location
 

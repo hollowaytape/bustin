@@ -12,7 +12,7 @@ DUMP_XLS_PATH = 'bustin_dump.xlsx'
 POINTER_XLS_PATH = 'bustin_pointer_dump.xlsx'
 
 FILES_TO_REINSERT = [
-    #'TBS.EXE',
+    'TBS.EXE',
     #'AVM.BIN',
     #'CLM.BIN',
     #'STM.BIN',
@@ -21,6 +21,7 @@ FILES_TO_REINSERT = [
 
 FILES_WITH_POINTERS = [
     'SEN013R.MCV',
+    'TBS.EXE',
 ]
 
 FILES = [
@@ -57,12 +58,13 @@ FILE_BLOCKS = {
         (0x10e74, 0x10e7c),
         (0x10e8e, 0x10ea3),
         (0x10f1c, 0x11014),
-        (0x11030, 0x110de),
+        (0x11030, 0x110af),
+        (0x110c9, 0x110df),
         (0x11160, 0x112c6),
         (0x112e6, 0x11311),
         (0x1131e, 0x11334),
         (0x1134b, 0x11370),
-        (0x11433,  0x11445),
+        (0x11433, 0x11445),
         (0x11473, 0x11485),
         (0x114b3, 0x114c5),
         (0x114f3, 0x11505),
@@ -299,6 +301,7 @@ FILE_BLOCKS = {
 }
 
 POINTER_CONSTANT = {
+    'TBS.EXE': 0x10950, 
     'AVM.BIN': 0x5c90,
     'SEN013R.MCV': 0x0,
 }
@@ -359,10 +362,10 @@ inline_CTRL = {
     0x07: b'[7]',
     0x08: b'[8]',
     0x09: b'[9]',
-    0x0a: b'[A]',
+    #0x0a: b'[A]',
     0x0b: b'[B]',
     0x0c: b'[C]',
-    0x0d: b'[D]',
+    #0x0d: b'[D]',
     0x0e: b'[E]',
     0x0f: b'[F]',
 }

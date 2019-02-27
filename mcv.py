@@ -86,7 +86,7 @@ def decompress_file(filename):
 def compress(s):
     result = b''
     cursor = 0
-    print(len(s))
+    #print(len(s))
     while cursor < len(s):
         b = s[cursor]
 

@@ -16,6 +16,11 @@ OriginalTBS = Disk(ORIGINAL_ROM_PATH, dump_excel=Dump, pointer_excel=PtrDump)
 TargetTBS = Disk(TARGET_ROM_PATH)
 
 for filename in FILES_TO_REINSERT:
+    last_block = (0, 0)
+    for block in FILE_BLOCKS[filename]:
+        assert block[0] >= last_block[1], "%s, %s" % (hex(block[0]), hex(block[1]))
+        last_block = block
+
     path_in_disk = "TBS\\"
     if filename.endswith(".MCV"):
         print(filename)
@@ -115,6 +120,9 @@ for filename in FILES_TO_REINSERT:
             #print("Diff is", diff)
 
         #print("Looking for:", block.original_blockstring)
+        assert len(block.blockstring) <= len(block.original_blockstring)
+        #while len(block.blockstring) < len(block.original_blockstring):
+        #    block.blockstring += b'\x00'
         block.incorporate()
 
     if filename.endswith(".MCV"):
