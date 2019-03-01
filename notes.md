@@ -134,6 +134,26 @@ nop
 
 Weird unexpected result? It gets outputted as halfwidth rather than fake fullwidth. Yay!
 
+NEW: This code is also used to display MSGS text. So it gets output as fullwidth.
+	What happens if I change it to 85?
+		Fine in menus.
+	But the offset is wrong. Need a way to add 0x1f-0x20 if it's displaying a MSG, and not if otherwise.
+		Theory: BL == 80 when doing normal text, BL == bb when displaying a MSG
+		ac 08c0 74f6 3c20 7219 b485 90 90 80fbbb 7515 0414 eb11
+		lodsb
+		or al, al
+		jz d717
+		cmp al, 20
+		jb d73e
+		mov ah, 85
+		nop
+		nop
+		cmp bl, bb
+		jnz d743
+		add al, 1f
+		(mroe conditions as needed)
+		jmp d743
+
 Menu text is TBS.EXE:11030
 THat asm code is at TBS.EXE:e51d.
 

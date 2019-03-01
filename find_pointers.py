@@ -10,7 +10,8 @@ from rominfo import FILE_BLOCKS, DUMP_XLS_PATH, FILES_WITH_POINTERS
 
 Dump = DumpExcel(DUMP_XLS_PATH)
 
-pointer_regex = r'\\xa0\\x16\\x([0-f][0-f])\\x([0-f][0-f])'
+scv_regex = r'\\xa0\\x16\\x([0-f][0-f])\\x([0-f][0-f])'
+exe_regex = r'\\xbe\\x([0-f][0-f])\\x([0-f][0-f])'
 blank_regex = r'\\x([0-f][0-f])\\x([0-f][0-f])'
 
 def capture_pointers_from_function(hx, regex): 
@@ -71,11 +72,22 @@ for gamefile in FILES_WITH_POINTERS:
             only_hex += u'\\x%02x' % c
 
         if gamefile.endswith('.EXE'):
+            pointer_regex = None
             other_regex = blank_regex
-        else:
+            #other_regex = None
+            code_regex = exe_regex
+        elif gamefile.endswith(".BIN"):
+            pointer_regex = None
+            other_regex = blank_regex
+            code_regex = exe_regex
+        elif gamefile.endswith("CV"):
+            pointer_regex = scv_regex
             other_regex = None
+            code_regex = None
+        else:
+            raise Exception
 
-        for regex in (pointer_regex, other_regex):
+        for regex in (pointer_regex, code_regex, other_regex):
             if regex is None:
                 continue
             print(regex)
@@ -87,14 +99,18 @@ for gamefile in FILES_WITH_POINTERS:
 
                 if regex == pointer_regex:
                     pointer_location = p.start()//4 + 2
+                elif regex == exe_regex:
+                    pointer_location = p.start()//4 + 1
                 elif regex == blank_regex:
                     pointer_location = p.start()//4
                 else:
                     raise Exception
 
                 text_location = int(location_from_pointer((p.group(1), p.group(2)), GF.pointer_constant), 16)
-                if text_location < POINTER_CONSTANT[gamefile] or pointer_location < POINTER_CONSTANT[gamefile]:
+                if text_location < POINTER_CONSTANT[gamefile]:
                     continue
+                #if text_location < POINTER_CONSTANT[gamefile] or pointer_location < POINTER_CONSTANT[gamefile]:
+                #    continue
 
                 if any([block[0] <= pointer_location <= block[1] for block in FILE_BLOCKS[gamefile]]):
                     continue
@@ -105,7 +121,10 @@ for gamefile in FILES_WITH_POINTERS:
                     if not any([area[0] <= text_location < area[1] for area in target_areas]):
                         continue
                     # That might fly in other games, but probably not this one. Should help with dupes
-                    if pointer_location > text_location:
+                    if regex == blank_regex and pointer_location > text_location:
+                        continue
+
+                    if regex == blank_regex and pointer_location < POINTER_CONSTANT[gamefile]:
                         continue
 
                 pointer_location = '0x%05x' % pointer_location

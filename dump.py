@@ -19,10 +19,12 @@ THRESHOLD = 4
 
 def dump(files):
     for filename in files:
+        print(filename)
         file_path = os.path.join('original/', filename)
         #if "/" in filename:
         #    sheet_name = filename.split("/")[1]
-        sheet_name = filename.replace("/", "-")
+        sheet_name = filename.split("/")[-1]
+        sheet_name = sheet_name.split("\\")[-1]
         sheet_name = sheet_name.replace("decompressed\\", "")
 
         row = 1
@@ -109,6 +111,7 @@ def dump(files):
             if len(sjis_strings) == 0:
                 continue
 
+            last_comp_loc = None
             for s in sjis_strings:
                 if len(s[1]) < THRESHOLD:
                     continue
@@ -132,7 +135,10 @@ def dump(files):
                     comp = compress(s[1])
                     substr = compressed_contents[compressed_cursor:]
                     i = substr.find(comp) + compressed_cursor
-                    compressed_cursor += len(comp)
+                    if last_comp_loc is not None:
+                        assert i > last_comp_loc, "%s is at %s, below cursor %s" % (jp, hex(i), hex(last_comp_loc))
+                    last_comp_loc = i
+                    compressed_cursor = i + len(comp)
                     compressed_loc = '0x' + hex(i).lstrip('0x').zfill(5)
                     worksheet.write(row, 1, compressed_loc)
 

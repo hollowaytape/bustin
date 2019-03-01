@@ -13,15 +13,21 @@ POINTER_XLS_PATH = 'bustin_pointer_dump.xlsx'
 
 FILES_TO_REINSERT = [
     'TBS.EXE',
-    #'AVM.BIN',
+    'AVM.BIN',
+    'RTM.BIN',
     #'CLM.BIN',
-    #'STM.BIN',
+    'STM.BIN',
     'SEN013R.MCV',
+    'RTD/MSGS.013',
+    'RTD/RTMS.013',
 ]
 
 FILES_WITH_POINTERS = [
-    'SEN013R.MCV',
     'TBS.EXE',
+    'AVM.BIN',
+    'RTM.BIN',
+    'STM.BIN',
+    'SEN013R.MCV',
 ]
 
 FILES = [
@@ -278,10 +284,11 @@ FILE_BLOCKS = {
     'STM.BIN': [
         (0x1586, 0x15ff),
         (0x1748, 0x177f),
-        (0x180a, 0x19ed),
+        (0x180a, 0x18ff),
+        (0x190f, 0x19ed),
         (0x19ff, 0x20c5),
-        (0x20c5, 0x2125),
-        (0x213b, 0x2218),
+        (0x20c5, 0x2126),
+        (0x2136, 0x2218),
     ],
     'MPM.BIN': [
         (0x4040, 0x4bdf),
@@ -295,6 +302,14 @@ FILE_BLOCKS = {
         (0xf4, 0x8c44),
     ],
 
+    'RTD/MSGS.013': [
+        (0xf0, 0x2d2a),
+    ],
+
+    'RTD/RTMS.013': [
+        (0x15a0, 0x3670),
+    ],
+
     'SEN013R.MCV': [
         (0x0, 0x1250),
     ],
@@ -302,6 +317,8 @@ FILE_BLOCKS = {
 
 POINTER_CONSTANT = {
     'TBS.EXE': 0x10950, 
+    'RTM.BIN': 0xea50,
+    'STM.BIN': 0x1580,
     'AVM.BIN': 0x5c90,
     'SEN013R.MCV': 0x0,
 }

@@ -21,7 +21,6 @@ for filename in FILES_TO_REINSERT:
         assert block[0] >= last_block[1], "%s, %s" % (hex(block[0]), hex(block[1]))
         last_block = block
 
-    path_in_disk = "TBS\\"
     if filename.endswith(".MCV"):
         print(filename)
         gamefile_path = os.path.join('original/decompressed/', filename)
@@ -36,12 +35,18 @@ for filename in FILES_TO_REINSERT:
         sheet_name = filename.split("\\")[-1]
         pointer_gamefile = Gamefile('original/SCN/%s' % filename.replace(".MCV", ".SCV"), disk=OriginalTBS, 
                                     dest_disk=TargetTBS, pointer_sheet_name=sheet_name)
+    elif 'RTMS' in filename or 'MSGS' in filename:
+        sheet_name = filename.split("/")[-1]
+        sheet_name = sheet_name.split("\\")[-1]
+        pointer_gamefile = gamefile
     else:
+        sheet_name = filename
         pointer_gamefile = gamefile
 
     if filename == 'TBS.EXE':
         # Ascii text hack for the main menu, see notes.md
-        gamefile.edit(0xe51d, b'\x08\xc0\x74\xf6\x3c\x20\x72\x19\x3c\x80\x72\x0b\x3c\x9f\x76\x19\x3c\xe0\x73\x0b\xe9\x81\xff\xb4\x82\x90\x90\xeb\x09\x90\x90')
+        # (Revised to display MSGS text properly, hopefully)
+        gamefile.edit(0xe51c, b'\xac\x08\xc0\x74\xf6\x3c\x20\x72\x19\x3c\x80\x72\x04\x3c\x9f\x76\x19\xb4\x85\x80\xfb\xbb\x75\x0f\x04\x1f\x3c\x7f\x72\x09\xfe\xc0\xeb\x05')
 
         gamefile.edit(0xe4e1, b'\x85')  # font table change
         gamefile.edit(0xe41e, b'\x01')  # cursor change
@@ -59,13 +64,22 @@ for filename in FILES_TO_REINSERT:
         previous_text_offset = block.start
         diff = 0
         uncompressed_diff = 0
-        if filename.endswith(".MCV"):
-            sheet_name = filename.split("/")[-1]
-        else:
-            sheet_name = filename
+
         for i, t in enumerate(Dump.get_translations(block, include_blank=True, sheet_name=sheet_name)):
-            #print(t.english)
+            #print(t)
             loc_in_block = t.location - block.start + uncompressed_diff
+
+            if "RTMS" in filename:
+                if t.english != b'':
+                    while len(t.jp_bytestring) > len(t.en_bytestring):
+                        t.en_bytestring += b'\x00'
+                    while len(t.en_bytestring) > len(t.jp_bytestring):
+                        t.jp_bytestring += b'\x00'
+                    assert len(t.en_bytestring)  <= 16
+                    assert len(t.en_bytestring) == len(t.jp_bytestring)
+                    i = block.blockstring.index(t.jp_bytestring)
+                    block.blockstring = block.blockstring.replace(t.jp_bytestring, t.en_bytestring, 1)
+                continue
 
             if filename.endswith(".MCV"):
                 this_diff = len(compress(t.en_bytestring)) - len(compress(t.jp_bytestring))
@@ -80,6 +94,7 @@ for filename in FILES_TO_REINSERT:
 
                 if filename.endswith(".MCV"):
                     pointer_gamefile.edit_pointers_in_range((previous_text_offset, t.compressed_location), diff)
+                    #print("previous_text_offset is", hex(t.compressed_location))
                     previous_text_offset = t.compressed_location
                 else:
                     pointer_gamefile.edit_pointers_in_range((previous_text_offset, t.location), diff)
@@ -111,6 +126,7 @@ for filename in FILES_TO_REINSERT:
             if filename.endswith(".MCV"):
                 pointer_gamefile.edit_pointers_in_range((previous_text_offset, t.compressed_location), diff)
                 previous_text_offset = t.compressed_location
+                #print("previous_text_offset is", hex(t.compressed_location))
             else:
                 pointer_gamefile.edit_pointers_in_range((previous_text_offset, t.location), diff)
                 previous_text_offset = t.location
@@ -120,18 +136,23 @@ for filename in FILES_TO_REINSERT:
             #print("Diff is", diff)
 
         #print("Looking for:", block.original_blockstring)
-        assert len(block.blockstring) <= len(block.original_blockstring)
-        #while len(block.blockstring) < len(block.original_blockstring):
-        #    block.blockstring += b'\x00'
+        if not filename.endswith(".MCV"):
+            assert len(block.blockstring) <= len(block.original_blockstring)
+            while len(block.blockstring) < len(block.original_blockstring):
+                block.blockstring += b'\x00'
         block.incorporate()
 
     if filename.endswith(".MCV"):
-        gamefile.write(path_in_disk='TBS/SCN', skip_disk=True, dest_path=filename.replace("original/", ""))
+        gamefile.write(path_in_disk='TBS\\SCN', skip_disk=True, dest_path=filename.replace("original/", ""))
         compress_file(filename)
         compressed_filename = 'patched/%s' % filename
-        print(compressed_filename)
+        #print(compressed_filename)
         cgf = Gamefile(compressed_filename, disk=OriginalTBS, dest_disk=TargetTBS)
-        cgf.write(path_in_disk='TBS/SCN')
+        cgf.write(path_in_disk='TBS\\SCN')
         pointer_gamefile.write(path_in_disk='TBS/SCN')
     else:
+        if "RTMS" in gamefile.filename or "MSGS" in gamefile.filename:
+            path_in_disk = "TBS\\RTD"
+        else:
+            path_in_disk="TBS\\"
         gamefile.write(path_in_disk=path_in_disk)
