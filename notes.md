@@ -139,19 +139,23 @@ NEW: This code is also used to display MSGS text. So it gets output as fullwidth
 		Fine in menus.
 	But the offset is wrong. Need a way to add 0x1f-0x20 if it's displaying a MSG, and not if otherwise.
 		Theory: BL == 80 when doing normal text, BL == bb when displaying a MSG
-		ac 08c0 74f6 3c20 7219 b485 90 90 80fbbb 7515 0414 eb11
+		ac08c074f63c2072193c8072043c9f7619b48580fbbb750f041f3c7f7209fec0eb05
 		lodsb
 		or al, al
 		jz d717
 		cmp al, 20
 		jb d73e
+		cmp al, 80
+		jb d72d
+		cmp al, 9f
+		jbe d746
 		mov ah, 85
-		nop
-		nop
 		cmp bl, bb
 		jnz d743
 		add al, 1f
-		(mroe conditions as needed)
+		cmp al, 7f
+		jb d743
+		inc al
 		jmp d743
 
 Menu text is TBS.EXE:11030

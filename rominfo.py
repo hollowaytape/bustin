@@ -18,6 +18,7 @@ FILES_TO_REINSERT = [
     #'CLM.BIN',
     'STM.BIN',
     'SEN013R.MCV',
+    'SEN013R1.MCV',
     'RTD/MSGS.013',
     'RTD/RTMS.013',
 ]
@@ -28,6 +29,7 @@ FILES_WITH_POINTERS = [
     'RTM.BIN',
     'STM.BIN',
     'SEN013R.MCV',
+    'SEN013R1.MCV',
 ]
 
 FILES = [
@@ -313,6 +315,10 @@ FILE_BLOCKS = {
     'SEN013R.MCV': [
         (0x0, 0x1250),
     ],
+
+    'SEN013R1.MCV': [
+        (0x0, 0x1250),
+    ],
 }
 
 POINTER_CONSTANT = {
@@ -321,6 +327,7 @@ POINTER_CONSTANT = {
     'STM.BIN': 0x1580,
     'AVM.BIN': 0x5c90,
     'SEN013R.MCV': 0x0,
+    'SEN013R1.MCV': 0x0,
 }
 
 """

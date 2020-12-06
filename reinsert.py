@@ -10,6 +10,19 @@ from rominfo import ORIGINAL_ROM_PATH, TARGET_ROM_PATH, DUMP_XLS_PATH, POINTER_X
 from romtools.disk import Disk, Gamefile, Block
 from romtools.dump import DumpExcel, PointerExcel
 
+MAPPING_MODE = True 
+def is_mappable(filename):
+    return filename.endswith(".MCV") or "MSGS" in filename
+
+def friendly_filename(filename):
+    if "RTD/" in filename:
+        filename = filename.replace("RTD/", "")
+    if "SEN0" in filename:
+        filename = filename.replace("SEN0", "")
+    if "MSGS." in filename:
+        filename = filename.replace("MSGS.", "Msg")
+    return filename
+
 Dump = DumpExcel(DUMP_XLS_PATH)
 PtrDump = PointerExcel(POINTER_XLS_PATH)
 OriginalTBS = Disk(ORIGINAL_ROM_PATH, dump_excel=Dump, pointer_excel=PtrDump)
@@ -88,18 +101,46 @@ for filename in FILES_TO_REINSERT:
                 this_diff = len(t.en_bytestring) - len(t.jp_bytestring)
 
             if t.english == b'' or t.english == t.japanese:
-                #print(hex(t.location), t.english, "Blank string")
-                this_diff = 0
-                #print("Diff is", diff)
+                if MAPPING_MODE and is_mappable(filename):
+                    if this_diff >= -4:
+                        # Really short string - doesn't indicate the ID, but isn't longer than the original
+                        id_string = b'~'
+                    elif this_diff >= -11:
+                        id_string = b'%i' % (i+2)
+                    else:
+                        id_string = b'%b-%i' % (friendly_filename(filename)[:7].encode('ascii'), (i+2))
+                    t.en_bytestring += id_string
+                    print(filename)
 
-                if filename.endswith(".MCV"):
-                    pointer_gamefile.edit_pointers_in_range((previous_text_offset, t.compressed_location), diff)
-                    #print("previous_text_offset is", hex(t.compressed_location))
-                    previous_text_offset = t.compressed_location
+                    if filename.endswith(".MCV"):
+                        # MCV strings need to be padded to the length of the COMPRESSED original string.
+                        assert len(compress(t.en_bytestring)) <= len(compress(t.jp_bytestring)), t.jp_bytestring
+                        while len(compress(t.en_bytestring)) < len(compress(t.jp_bytestring)):
+                            t.en_bytestring += b' '
+                        this_diff = len(compress(t.en_bytestring)) - len(compress(t.jp_bytestring))
+                    elif "MSGS" in filename:
+                        # Other strings can be padded to the length of the original JP string.
+                        # TODO: What other files to include in this? Not EXEs for now
+                        print("Mapping MSGS")
+                        while len(t.en_bytestring) < len(t.jp_bytestring):
+                            t.en_bytestring += b' '
+                        this_diff = len(t.en_bytestring) - len(t.jp_bytestring)
+
+                    assert this_diff == 0
+
+                #print(hex(t.location), t.english, "Blank string")
                 else:
-                    pointer_gamefile.edit_pointers_in_range((previous_text_offset, t.location), diff)
-                    previous_text_offset = t.location
-                continue
+                    this_diff = 0
+                    #print("Diff is", diff)
+
+                    if filename.endswith(".MCV"):
+                        pointer_gamefile.edit_pointers_in_range((previous_text_offset, t.compressed_location), diff)
+                        #print("previous_text_offset is", hex(t.compressed_location))
+                        previous_text_offset = t.compressed_location
+                    else:
+                        pointer_gamefile.edit_pointers_in_range((previous_text_offset, t.location), diff)
+                        previous_text_offset = t.location
+                    continue
 
             try:
                 i = block.blockstring.index(t.jp_bytestring)
@@ -118,24 +159,20 @@ for filename in FILES_TO_REINSERT:
                 index += len(t.jp_bytestring)
 
             assert loc_in_block == i, (t, hex(loc_in_block), hex(i))
-            #while loc_in_block != i:
 
             block.blockstring = block.blockstring.replace(t.jp_bytestring, t.en_bytestring, 1)
-            #print(block.blockstring)
 
             if filename.endswith(".MCV"):
                 pointer_gamefile.edit_pointers_in_range((previous_text_offset, t.compressed_location), diff)
                 previous_text_offset = t.compressed_location
-                #print("previous_text_offset is", hex(t.compressed_location))
+
             else:
                 pointer_gamefile.edit_pointers_in_range((previous_text_offset, t.location), diff)
                 previous_text_offset = t.location
 
             diff += this_diff
             uncompressed_diff += len(t.en_bytestring) - len(t.jp_bytestring)
-            #print("Diff is", diff)
 
-        #print("Looking for:", block.original_blockstring)
         if not filename.endswith(".MCV"):
             assert len(block.blockstring) <= len(block.original_blockstring)
             while len(block.blockstring) < len(block.original_blockstring):

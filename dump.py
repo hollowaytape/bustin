@@ -38,9 +38,13 @@ def dump(files):
         worksheet.write(0, 6, 'Comments', header)
 
         worksheet.set_column('A:A', 8)
+        worksheet.set_column('B:B', 8)
         worksheet.set_column('C:C', 60)
-        worksheet.set_column('D:D', 15)
+        worksheet.set_column('D:D', 5)
         worksheet.set_column('E:E', 60)
+        worksheet.set_column('F:F', 5)
+        worksheet.set_column('G:G', 80)
+
 
         if "RTMS" in filename or "MSGS" in filename or "DAT" in filename:
             ASCII_MODE = 0
