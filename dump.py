@@ -16,6 +16,9 @@ ASCII_MODE = 1
 
 THRESHOLD = 4
 
+#FILES = ["TBS.EXE", "decompressed\\SEN013R1.MCV",]
+#print(FILES)
+
 
 def dump(files):
     for filename in files:
@@ -76,9 +79,21 @@ def dump(files):
                 # First byte of SJIS text. Read the next one, too
                 if (0x80 <= block_contents[cursor] <= 0x9f or 0xe0 <= block_contents[cursor] <= 0xef) and cursor+1 < len(block_contents):
                     #print(bytes(block_contents[cursor]))
-                    sjis_buffer += block_contents[cursor].to_bytes(1, byteorder='little')
+                    sjis_char = block_contents[cursor:cursor+2]
+                    try:
+                        ch = sjis_char.decode('shift-jis')
+                        sjis_buffer += sjis_char
+                    except UnicodeDecodeError:
+                        print("Invalid char")
+                        sjis_strings.append((sjis_buffer_start+block[0], sjis_buffer))
+                        sjis_buffer = b""
+                        sjis_buffer_start = cursor+1
                     cursor += 1
-                    sjis_buffer += block_contents[cursor].to_bytes(1, byteorder='little')
+
+                    #print(sjis_char)
+                    #sjis_buffer += block_contents[cursor].to_bytes(1, byteorder='little')
+                    #cursor += 1
+                    #sjis_buffer += block_contents[cursor].to_bytes(1, byteorder='little')
 
                 # ASCII text
                 elif 0x20 <=block_contents[cursor] <= 0x7e and ASCII_MODE in (1, 2):
@@ -124,8 +139,18 @@ def dump(files):
                 try:
                     jp = s[1].decode('shift-jis')
                 except UnicodeDecodeError:
+                    problem_string = s[1]
+                    ind = 0
+                    while problem_string:
+                        char = problem_string[:2]
+                        print(char)
+                        print(ind, char.decode('shift-jis'))
+                        ind += 2
+                        problem_string = problem_string[2:]
+                    print(s[1])
+                    jp = "Can't decode"
                     print("Couldn't decode that")
-                    continue
+                    #continue
 
                 if len(jp.strip()) == 0:
                     continue
@@ -140,7 +165,7 @@ def dump(files):
                     substr = compressed_contents[compressed_cursor:]
                     i = substr.find(comp) + compressed_cursor
                     if last_comp_loc is not None:
-                        assert i > last_comp_loc, "%s is at %s, below cursor %s" % (jp, hex(i), hex(last_comp_loc))
+                        assert i >= last_comp_loc, "%s is at %s, below cursor %s" % (jp, hex(i), hex(last_comp_loc))
                     last_comp_loc = i
                     compressed_cursor = i + len(comp)
                     compressed_loc = '0x' + hex(i).lstrip('0x').zfill(5)
@@ -159,12 +184,3 @@ if __name__ == '__main__':
     workbook = xlsxwriter.Workbook('bustin_dump.xlsx')
     header = workbook.add_format({'bold': True, 'align': 'center', 'bottom': True, 'bg_color': 'gray'})
     dump(FILES)
-
-
-# TODO: It'd be even better if it just took a disk, or a bunch of disks, and used ndc to get files.
-# TODO: Column for disks
-
-# TODO: Export the dump to a google doc as well?
-
-# TODO: Detect blocks and export that to a skeleton rominfo.py file.
-    # (That could help with detecting some of the one-string-only "blocks" in code sections.)

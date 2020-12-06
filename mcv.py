@@ -27,12 +27,8 @@ def decompress_file(filename):
                 else:
                     result += b'[%i]' % b
                 #result += b'?'
-            elif b <= 0x16:
-                cursor += 1
-                b2 = contents[cursor]
-                #b2 = b2 ^ 0xff
-                result += b.to_bytes(1, 'little')
-                result += b2.to_bytes(1, 'little')
+            elif b <= 0x15:
+                result += CTRL[b]
 
             # Aspirated hiragana
             elif b <= 0x1f:
@@ -58,7 +54,22 @@ def decompress_file(filename):
             elif b <= 0x7f:
                 result += CTRL[b]
 
+            elif b == 0x86:
+                cursor += 1
+                b2 = contents[cursor]
+                if b2 == 0xa2:
+                    result += b'[LINE]'
+                elif b2 == 0x91:
+                    result += b'[8691]'
+                elif b2 == 0x9c:
+                    result += b'[869c]'
+                elif b2 == 0x9d:
+                    result += b'[869d]'
+                else:
+                    input()
+
             # Normal SJIS, but flip 2nd byte again
+            # TODO: Or not?? The flip is disabled
             elif b <= 0x9f:
                 cursor += 1
                 b2 = contents[cursor]
@@ -66,9 +77,17 @@ def decompress_file(filename):
                 result += b.to_bytes(1, 'little')
                 result += b2.to_bytes(1, 'little')
 
+                if (b == 0x82):
+                    print(hex(b), hex(b2))
+
+
             # More stuff
             elif b <= 0xe0:
                 result += CTRL[b]
+                if result.endswith(b'\x82\x00'):
+                    print(hex(b))
+                    print(CTRL[b])
+                    print("Just added an 8200 control code")
 
             elif b <= 0xef:
                 cursor += 1
@@ -81,6 +100,8 @@ def decompress_file(filename):
                 result += CTRL[b]
             cursor += 1
         with open("original/decompressed/%s" % filename, 'wb') as g:
+            #if b'\x86\xa2' in result:
+            #    print("It has a line control code in it")
             g.write(result)
 
 def compress(s):
@@ -113,7 +134,12 @@ def compress(s):
                 cursor += 1
             code += s[cursor].to_bytes(1, 'little')
             assert code in inverse_CTRL, code
-            result += inverse_CTRL[code].to_bytes(1, 'little')
+
+            try:
+                result += inverse_CTRL[code].to_bytes(1, 'little')
+            except AttributeError:
+                # [LINE] and a few others are defined with two codes
+                result += inverse_CTRL[code]
 
         # Ascii text
         else:

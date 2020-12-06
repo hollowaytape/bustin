@@ -375,7 +375,7 @@ for file in FILES:
 
 """
 
-
+# TODO: Re-enable when done testing the dumper
 for file in os.listdir('original/decompressed'):
     FILES.append(os.path.join('decompressed', file))
 
@@ -411,6 +411,12 @@ CTRL = {
     0x0d: b'[D]',
     0x0e: b'[E]',
     0x0f: b'[F]',
+    0x10: b'[10]',
+    0x11: b'[11]',
+    0x12: b'[12]',
+    0x13: b'[13]',
+    0x14: b'[14]',
+    0x15: b'[15]',
 
     0x16: b'\x82\xce',  # ば び  ぶ べ  ぼ ぱ ぴ  ぷ  ぺ ぽ
     0x17: b'\x82\xd1',
@@ -504,6 +510,12 @@ CTRL = {
     0xfd: b'\x82\xc5',
     0xfe: b'\x82\xc7',
     0xff: b'\x82\xce',
+
+    b'\x86\xad': b'[LINE]',
+    b'\x86\x91': b'[8691]',
+    b'\x86\x9c': b'[869c]',
+    b'\x86\x9d': b'[869d]',
+    b'\x10\x0f': b'[100f]',
 }
 
 for n in range(0x41, 0x5b):
@@ -525,8 +537,11 @@ ls = [ b'\xf0', b'\x9f', b'\xa1', b'\xa3', b'\xa5', b'\xa7', b'\xe1', b'\xe3', b
 for n in range(0xa6, 0xe1):
     #print(ls[n - 0xa6])
     CTRL[n] = b'\x82' + ls[n - 0xa6]
+    print(hex(n), CTRL[n])
 
+CTRL[0xb0] = b'[8200]' # Not sure what this means
 CTRL[0xb1] = b'\x81\x5b'   # long dash; no idea why this overrides the list entry
+
 
 inverse_CTRL = {v: k for k, v in CTRL.items() if k != 0xa4}
 #inverse_CTRL.remove(0xa4)

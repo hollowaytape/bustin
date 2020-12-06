@@ -183,3 +183,16 @@ THat asm code is at TBS.EXE:e51d.
 * Alright. That next text's pointer value is 0x6a2 (0x281 + 0x421. So just take the compressed location, ignore the weird ESI value/0x421 fuckery) which is found at SEN013R.SCV:0x19e8.
 	* 0e05 is also a value with a 16 prefix.
 	* find_pointers.py should look for all things preceded by a016. (and maybe followed by a4)
+
+## Where the text is in the files
+* System text I have seen in the game
+	* TBS.EXE - Main menu text
+	* CLM.BIN - Intro scroll text
+	* RTM.BIN - Real-time mode? Commands
+* Scenario text I've seen in the game
+* Seemingly important system text
+* AVM.BIN - Adventure mode text - commands, stats, character descriptions, etc
+* FTM.BIN - Fight mode? Similar text to AVM.BIN
+* MPM.BIN - Map mode? Place names/descriptions
+* STM.BIN - Comamnds, stats, character descriptions/profiles
+* EDM.BIN - Ending/credits
