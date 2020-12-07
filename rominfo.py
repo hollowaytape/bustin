@@ -375,7 +375,6 @@ for file in FILES:
 
 """
 
-# TODO: Re-enable when done testing the dumper
 for file in os.listdir('original/decompressed'):
     FILES.append(os.path.join('decompressed', file))
 
@@ -411,9 +410,9 @@ CTRL = {
     0x0d: b'[D]',
     0x0e: b'[E]',
     0x0f: b'[F]',
-    0x10: b'[10]',
-    0x11: b'[11]',
-    0x12: b'[12]',
+    0x10: b'[10]',  # Used for coloring text in pink/orange for a nametag within text. 100e = start, 100f = end. Defined below
+    0x11: b'[11]',  # Unknown, seems similar to [12] below, usually by itself after nametags or with 4/5/6 afterwards.
+    0x12: b'[12]', # Unknown. Usually [12][4], 5, or 6. Sometimes right before an END. Maybe a speed/pause thing?
     0x13: b'[13]',
     0x14: b'[14]',
     0x15: b'[15]',
@@ -511,11 +510,13 @@ CTRL = {
     0xfe: b'\x82\xc7',
     0xff: b'\x82\xce',
 
-    b'\x86\xad': b'[LINE]',
+    b'\x86\xad': b'\x81\x5c', # formerly [LINE]
     b'\x86\x91': b'[8691]',
     b'\x86\x9c': b'[869c]',
     b'\x86\x9d': b'[869d]',
-    b'\x10\x0f': b'[100f]',
+
+    b'\x10\x0e': b'[Nametag]',
+    b'\x10\x0f': b'[/Nametag]',
 }
 
 for n in range(0x41, 0x5b):
@@ -539,7 +540,7 @@ for n in range(0xa6, 0xe1):
     CTRL[n] = b'\x82' + ls[n - 0xa6]
     print(hex(n), CTRL[n])
 
-CTRL[0xb0] = b'[8200]' # Not sure what this means
+CTRL[0xb0] = b'\x81\x5b' # Long dash
 CTRL[0xb1] = b'\x81\x5b'   # long dash; no idea why this overrides the list entry
 
 

@@ -28,7 +28,13 @@ def decompress_file(filename):
                     result += b'[%i]' % b
                 #result += b'?'
             elif b <= 0x15:
-                result += CTRL[b]
+                b2 = contents[cursor+1]
+                #print(b, b2, b.to_bytes(1, 'little') + b2.to_bytes(1, 'little'))
+                if b.to_bytes(1, 'little') + b2.to_bytes(1, 'little') in CTRL:
+                    result += CTRL[b.to_bytes(1, 'little') + b2.to_bytes(1, 'little')]
+                    cursor += 1
+                else:
+                    result += CTRL[b]
 
             # Aspirated hiragana
             elif b <= 0x1f:
@@ -58,7 +64,7 @@ def decompress_file(filename):
                 cursor += 1
                 b2 = contents[cursor]
                 if b2 == 0xa2:
-                    result += b'[LINE]'
+                    result += b'\x81\x5c'
                 elif b2 == 0x91:
                     result += b'[8691]'
                 elif b2 == 0x9c:
@@ -77,17 +83,10 @@ def decompress_file(filename):
                 result += b.to_bytes(1, 'little')
                 result += b2.to_bytes(1, 'little')
 
-                if (b == 0x82):
-                    print(hex(b), hex(b2))
-
 
             # More stuff
             elif b <= 0xe0:
                 result += CTRL[b]
-                if result.endswith(b'\x82\x00'):
-                    print(hex(b))
-                    print(CTRL[b])
-                    print("Just added an 8200 control code")
 
             elif b <= 0xef:
                 cursor += 1
@@ -120,7 +119,10 @@ def compress(s):
             #print(code)
             if code in inverse_CTRL:
                 #print(code, "is a ctrl code for", hex(inverse_CTRL[code]))
-                result += inverse_CTRL[code].to_bytes(1, 'little')
+                try:
+                    result += inverse_CTRL[code].to_bytes(1, 'little')
+                except AttributeError:
+                    result += inverse_CTRL[code]
             else:
                 #print(code, "is not a control code")
                 result += b.to_bytes(1, 'little')
