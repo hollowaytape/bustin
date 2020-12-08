@@ -3,6 +3,7 @@
 """
 
 import os
+from collections import OrderedDict
 from romtools.dump import DumpExcel
 from romtools.disk import Disk, Gamefile
 
@@ -10,6 +11,9 @@ ORIGINAL_ROM_PATH = 'original/Tokyo Twilight Busters.hdi'
 TARGET_ROM_PATH = 'patched/Tokyo Twilight Busters.hdi'
 DUMP_XLS_PATH = 'bustin_dump.xlsx'
 POINTER_XLS_PATH = 'bustin_pointer_dump.xlsx'
+
+# Backup sheet, to avoid overwriting a dump that has a bucn hof text in it
+BACKUP_XLS_PATH = 'bustin_dump_backup.xlsx'
 
 FILES_TO_REINSERT = [
     'TBS.EXE',
@@ -378,6 +382,13 @@ for file in FILES:
 for file in os.listdir('original/decompressed'):
     FILES.append(os.path.join('decompressed', file))
 
+FILE_CATEGORIES = OrderedDict({
+    "System": ["TBS.EXE", "RTM.BIN", "STM.BIN", "AVM.BIN", "MPM.BIN", "FTM.BIN", "CLM.BIN", "EDM.BIN", "TOKYO.DAT", "INIT.DAT", "NEWS.MCV"],
+    "Prologue": ["SEN013R.MCV", "SEN013R1.MCV", "RTMS.013"],
+    "Chapter 1": ["SEN000A.MCV", "SEN000A1.MCV", "SEN000A6.MCV", "SEN000A7.MCV", "SEN000A8.MCV", "SEN000A9.MCV"],
+});
+
+
 inline_CTRL = {
     0x04: b'[4]',
     0x05: b'[5]',
@@ -538,7 +549,7 @@ ls = [ b'\xf0', b'\x9f', b'\xa1', b'\xa3', b'\xa5', b'\xa7', b'\xe1', b'\xe3', b
 for n in range(0xa6, 0xe1):
     #print(ls[n - 0xa6])
     CTRL[n] = b'\x82' + ls[n - 0xa6]
-    print(hex(n), CTRL[n])
+    #print(hex(n), CTRL[n])
 
 CTRL[0xb0] = b'\x81\x5b' # Long dash
 CTRL[0xb1] = b'\x81\x5b'   # long dash; no idea why this overrides the list entry

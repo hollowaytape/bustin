@@ -1,12 +1,12 @@
 """
-    Generic dumper of Shift-JIS text into an excel spreadsheet.
-    Meant for quick estimations of how much text is in a game.
+    Dumps TTB text into an excel sheet for translation and reinsertion.
 """
 
 import sys
 import os
+import openpyxl
 import xlsxwriter
-from rominfo import FILES, FILE_BLOCKS, inline_CTRL
+from rominfo import FILES, FILE_BLOCKS, inline_CTRL, DUMP_XLS_PATH, BACKUP_XLS_PATH, FILE_CATEGORIES
 from mcv import compress
 
 ASCII_MODE = 1
@@ -19,16 +19,25 @@ THRESHOLD = 4
 #FILES = ["TBS.EXE", "decompressed\\SEN013R1.MCV",]
 #print(FILES)
 
+existing_strings = {}
+
+def safe_sheet_name(filename):
+    sheet_name = filename.split("/")[-1]
+    sheet_name = sheet_name.split("\\")[-1]
+    sheet_name = sheet_name.replace("decompressed\\", "")
+    return sheet_name
+
 
 def dump(files):
+    # Create the overview worksheet now so it shows up first.
+    # Can't create it fully right away because links wouldn't work.
+    overview_worksheet = workbook.add_worksheet("Overview")
+
     for filename in files:
         print(filename)
         file_path = os.path.join('original/', filename)
-        #if "/" in filename:
-        #    sheet_name = filename.split("/")[1]
-        sheet_name = filename.split("/")[-1]
-        sheet_name = sheet_name.split("\\")[-1]
-        sheet_name = sheet_name.replace("decompressed\\", "")
+
+        sheet_name = safe_sheet_name(filename)
 
         row = 1
         worksheet = workbook.add_worksheet(sheet_name)
@@ -176,11 +185,77 @@ def dump(files):
                 worksheet.write(row, 3, '=LEN(C%s)' % str(row+1))
                 worksheet.write(row, 5, '=LEN(E%s)' % str(row+1))
                 #worksheet.write(row, 3, filename)
+
+                if (filename, loc) in existing_strings:
+                    print("String already exists")
+                    worksheet.write(row, 4, existing_strings[(filename, loc)])
+
                 row += 1
+
+    # Fill in overview worksheet
+    worksheet = overview_worksheet
+    worksheet.set_column('A:A', 30)
+    worksheet.set_column('B:B', 8)
+    worksheet.set_column('C:C', 8)
+    row = 0
+    worksheet.write(row, 0, "Tokyo Twilight Busters", header)
+    worksheet.write(row, 1, '=SUM(B3:B10000)')
+    worksheet.write(row, 2, '=SUM(C3:C10000)')
+    row += 1
+
+    for category in FILE_CATEGORIES:
+        row += 1
+        worksheet.write(row, 0, category, header)
+        worksheet.write(row, 1, "Translated", header)
+        worksheet.write(row, 2, "Total", header)
+        row += 1
+
+        for filename in FILE_CATEGORIES[category]:
+            worksheet.write(row, 0, filename)
+            worksheet.write(row, 1, '=COUNTIF(%s!E2:E10000, "*")' % filename)
+            worksheet.write(row, 2, '=COUNTIF(%s!C2:C10000, "*")' % filename)
+            row += 1
+
+    # Add leftover filenames to an "Unknown" section
+    row += 1
+    worksheet.write(row, 0, "Uncategorized", header)
+    worksheet.write(row, 1, "Translated", header)
+    worksheet.write(row, 2, "Total", header)
+    row += 1
+
+    for filename in files:
+        sheet_name = safe_sheet_name(filename)
+
+        found = False
+        for category in FILE_CATEGORIES:
+            if sheet_name in FILE_CATEGORIES[category]:
+                found = True
+        if not found:
+            worksheet.write(row, 0, sheet_name)
+            worksheet.write(row, 1, '=COUNTIF(%s!E2:E10000, "*")' % sheet_name)
+            worksheet.write(row, 2, '=COUNTIF(%s!C2:C10000, "*")' % sheet_name)
+            row += 1
+
 
     workbook.close()
 
 if __name__ == '__main__':
-    workbook = xlsxwriter.Workbook('bustin_dump.xlsx')
+    for workbook_path in [DUMP_XLS_PATH, BACKUP_XLS_PATH]:
+        existing_workbook = openpyxl.load_workbook(BACKUP_XLS_PATH)
+        for sheet_name in existing_workbook.sheetnames:
+            #print(sheet_name)
+            sheet = existing_workbook[sheet_name]
+            for row in list(sheet.rows)[1:]:
+                #for i, cell in enumerate(row):
+                #    print(row[i].value)
+                offset = row[0].value
+                english = row[4].value
+                if english:
+                    existing_strings[(sheet_name, offset)] = english
+
+    print(existing_strings)
+
+
+    workbook = xlsxwriter.Workbook(DUMP_XLS_PATH)
     header = workbook.add_format({'bold': True, 'align': 'center', 'bottom': True, 'bg_color': 'gray'})
     dump(FILES)
