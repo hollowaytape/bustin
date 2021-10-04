@@ -521,7 +521,8 @@ CTRL = {
     0xfe: b'\x82\xc7',
     0xff: b'\x82\xce',
 
-    b'\x86\xad': b'\x81\x5c', # formerly [LINE]
+    # TODO: Disabling this for now
+    #b'\x86\xad': b'\x81\x5c', # formerly [LINE]
     b'\x86\x91': b'[8691]',
     b'\x86\x9c': b'[869c]',
     b'\x86\x9d': b'[869d]',
@@ -552,8 +553,8 @@ for n in range(0xa6, 0xe1):
     #print(hex(n), CTRL[n])
 
 CTRL[0xb0] = b'\x81\x5b' # Long dash
-CTRL[0xb1] = b'\x81\x5b'   # long dash; no idea why this overrides the list entry
-
+# b1 should code for little ぁ
+#CTRL[0xb1] = b'\x81\x5b'   # long dash; no idea why this overrides the list entry
 
 inverse_CTRL = {v: k for k, v in CTRL.items() if k != 0xa4}
 #inverse_CTRL.remove(0xa4)

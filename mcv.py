@@ -60,11 +60,15 @@ def decompress_file(filename):
             elif b <= 0x7f:
                 result += CTRL[b]
 
+            # TODO: I think I don't understand this well.
+            # 79  in compresed (86 after flipped) should code for (81) 45
+            # Instead, it is coding for (81) 5c.
+
             elif b == 0x86:
                 cursor += 1
                 b2 = contents[cursor]
                 if b2 == 0xa2:
-                    result += b'\x81\x5c'
+                    result += b'\x81\x45'
                 elif b2 == 0x91:
                     result += b'[8691]'
                 elif b2 == 0x9c:
@@ -98,6 +102,9 @@ def decompress_file(filename):
             elif b <= 0xff:
                 result += CTRL[b]
             cursor += 1
+            # Debug logging
+            #if (cursor < 0x1000):
+            #    print(hex(cursor), hex(len(result)), hex(b), "Result: ", hex(result[-1]))
         with open("original/decompressed/%s" % filename, 'wb') as g:
             #if b'\x86\xa2' in result:
             #    print("It has a line control code in it")
@@ -176,3 +183,6 @@ if __name__ == "__main__":
             decompress_file(filename)
 
     compress_file("SEN013R.MCV")
+
+    # Testing
+    #decompress_file("SEN013R1.MCV")
